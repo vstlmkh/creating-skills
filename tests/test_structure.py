@@ -80,6 +80,20 @@ class TemplatesRoundTrip(unittest.TestCase):
         self.assertEqual(errs, [], f"skeleton not conformant: {errs}")
 
 
+class Evals(unittest.TestCase):
+    def test_at_least_three_valid_evals(self):
+        import glob
+        import json
+        files = glob.glob(os.path.join(SKILL_DIR, "evals", "*.json"))
+        self.assertGreaterEqual(len(files), 3, "need at least three eval scenarios")
+        for f in files:
+            data = json.load(open(f, encoding="utf-8"))
+            self.assertIn("skills", data)
+            self.assertIn("query", data)
+            self.assertIsInstance(data.get("expected_behavior"), list)
+            self.assertIsInstance(data.get("should_trigger"), bool)
+
+
 class Dogfood(unittest.TestCase):
     def test_skill_validates_itself(self):
         errs = [f for f in V.validate_skill(SKILL_DIR) if f.level == "ERROR"]

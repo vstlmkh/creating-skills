@@ -57,6 +57,26 @@ python3 scripts/example.py <input>
 ```
 """
 
+GUIDE_STUB = """# Guide
+
+Detailed procedure for this skill. Replace this stub with the real steps, and load
+it from SKILL.md only when the agent needs the full detail.
+"""
+
+EXAMPLE_SCRIPT = """#!/usr/bin/env python3
+\"\"\"Example utility. Replace with the real script.\"\"\"
+import sys
+
+
+def main(argv):
+    print("replace me", argv)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
+"""
+
 
 def build_skill_md(name: str, description: str, with_scripts: bool) -> str:
     body = SKILL_TEMPLATE.format(name=name, description=description)
@@ -72,8 +92,12 @@ def scaffold(name, description, with_scripts, dest):
         return 1
     os.makedirs(os.path.join(target, "references"))
     os.makedirs(os.path.join(target, "assets"))
+    with open(os.path.join(target, "references", "guide.md"), "w", encoding="utf-8") as fh:
+        fh.write(GUIDE_STUB)  # so the SKILL.md reference link resolves from the start
     if with_scripts:
         os.makedirs(os.path.join(target, "scripts"))
+        with open(os.path.join(target, "scripts", "example.py"), "w", encoding="utf-8") as fh:
+            fh.write(EXAMPLE_SCRIPT)
     with open(os.path.join(target, "SKILL.md"), "w", encoding="utf-8") as fh:
         fh.write(build_skill_md(name, description, with_scripts))
     validator = os.path.join(os.path.dirname(os.path.abspath(__file__)), "validate_skill.py")

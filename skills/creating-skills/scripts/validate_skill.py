@@ -70,16 +70,35 @@ def parse_frontmatter(text: str):
     if end is None:
         raise ValueError("frontmatter opened with '---' but never closed")
     fm = {}
-    for ln in lines[start + 1:end]:
+    block = lines[start + 1:end]
+    i = 0
+    while i < len(block):
+        ln = block[i]
         if not ln.strip() or ln[:1] in (" ", "\t"):
-            continue  # skip blanks and nested/indented keys
+            i += 1  # skip blanks and nested/indented keys (e.g. metadata: children)
+            continue
         if ":" not in ln:
+            i += 1
             continue
         key, _, value = ln.partition(":")
-        value = value.strip()
+        key, value = key.strip(), value.strip()
         if len(value) >= 2 and value[0] in "\"'" and value[-1] == value[0]:
-            value = value[1:-1]
-        fm[key.strip()] = value
+            fm[key] = value[1:-1]
+            i += 1
+            continue
+        # Block scalars ('>' folded, '|' literal, with optional chomping indicators)
+        # gather the indented continuation so length/tag rules see the real text.
+        if value and value[0] in ">|" and value.strip(">|+-") == "":
+            folded = value[0] == ">"
+            j, parts = i + 1, []
+            while j < len(block) and (not block[j].strip() or block[j][:1] in (" ", "\t")):
+                parts.append(block[j].strip())
+                j += 1
+            fm[key] = (" " if folded else "\n").join(parts).strip()
+            i = j
+            continue
+        fm[key] = value
+        i += 1
     body = "\n".join(lines[end + 1:])
     return fm, body
 
@@ -92,11 +111,14 @@ def _iter_markdown(skill_dir: str):
 
 
 _LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
-_WINDOWS_PATH_RE = re.compile(r"[\w.-]+\\[\w.\\-]+")
+# dir\file.ext — a real backslash path, not a markdown escape like file\_name.
+_WINDOWS_PATH_RE = re.compile(r"[\w.-]+\\[\w.-]+\.[A-Za-z0-9]+")
 _TIME_RE = re.compile(r"\b(?:before|after|as of)\b[^\n]*\b20\d\d\b", re.IGNORECASE)
 _MCP_RE = re.compile(r"\buse the (\S+) tool\b", re.IGNORECASE)
-_FIRST_PERSON_RE = re.compile(r"\b(?:I|you|we)\b", re.IGNORECASE)
-_XML_RE = re.compile(r"<[^>]+>")
+# Spec pattern: capitalised first/second person as a word, not "i.e." or "we're".
+_FIRST_PERSON_RE = re.compile(r"\b(?:I|You|We)\s")
+# An actual HTML/XML tag (open or close), not a bare '<' from "x < y".
+_XML_RE = re.compile(r"</?[A-Za-z][^>]*>")
 
 
 def validate_skill(skill_dir: str) -> list:
@@ -111,8 +133,12 @@ def validate_skill(skill_dir: str) -> list:
         add(Finding("ERROR", "no-skill-md", f"SKILL.md not found in {skill_dir}"))
         return findings
 
-    with open(skill_md, encoding="utf-8") as fh:
-        text = fh.read()
+    try:
+        with open(skill_md, encoding="utf-8") as fh:
+            text = fh.read()
+    except (UnicodeDecodeError, OSError) as exc:
+        add(Finding("ERROR", "frontmatter-unparseable", f"SKILL.md is not readable UTF-8: {exc}"))
+        return findings
 
     try:
         fm, body = parse_frontmatter(text)
@@ -164,8 +190,12 @@ def validate_skill(skill_dir: str) -> list:
     # per-file checks across the whole skill
     for path in _iter_markdown(skill_dir):
         rel = os.path.relpath(path, skill_dir)
-        with open(path, encoding="utf-8") as fh:
-            content = fh.read()
+        try:
+            with open(path, encoding="utf-8") as fh:
+                content = fh.read()
+        except (UnicodeDecodeError, OSError):
+            add(Finding("WARN", "file-unreadable", f"{rel} is not readable UTF-8; skipped"))
+            continue
         lines = content.splitlines()
         if len(lines) > TOC_LINE_THRESHOLD and "## Contents" not in content:
             add(Finding("ERROR", "toc-missing", f"{rel} is {len(lines)} lines (> {TOC_LINE_THRESHOLD}) and has no '## Contents'"))
@@ -175,10 +205,11 @@ def validate_skill(skill_dir: str) -> list:
             target = m.group(1).split()[0].strip()
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
-            if ".." in target.split("/"):
+            parts = target.split("/")
+            if ".." in parts:
                 add(Finding("ERROR", "ref-escape", f"{rel} links outside the skill dir: {target}"))
-            elif target.endswith(".md") or "/" in target:
-                depth = len([p for p in target.split("/")[:-1] if p not in ("", ".")])
+            elif parts and parts[0] == "references":
+                depth = len([p for p in parts[:-1] if p not in ("", ".")])
                 if depth > 1:
                     add(Finding("ERROR", "ref-nesting", f"{rel} link '{target}' is more than one level deep"))
 

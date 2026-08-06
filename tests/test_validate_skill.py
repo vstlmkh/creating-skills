@@ -193,6 +193,59 @@ class WarnChecks(unittest.TestCase):
         self.assertIn("desc-first-person", codes(V.validate_skill(d)))
 
 
+class Regressions(unittest.TestCase):
+    """Defects found in stage-5 review; each asserted both ways."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def test_non_utf8_degrades_gracefully(self):
+        d = os.path.join(self.tmp, "my-skill")
+        os.makedirs(d)
+        with open(os.path.join(d, "SKILL.md"), "wb") as fh:
+            fh.write(b"---\nname: my-skill\ndescription: \xff\xfe bad bytes\n---\nbody")
+        findings = V.validate_skill(d)  # must not raise
+        self.assertIn("frontmatter-unparseable", codes(findings))
+
+    def test_folded_description_is_measured(self):
+        long = "x " * 600  # > 1024 chars once folded
+        md = f"---\nname: my-skill\ndescription: >\n  {long}\n---\nbody"
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertIn("desc-length", codes(V.validate_skill(d)))
+
+    def test_folded_description_xml_caught(self):
+        md = "---\nname: my-skill\ndescription: >\n  Use <b>bold</b> here\n---\nbody"
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertIn("desc-xml", codes(V.validate_skill(d)))
+
+    def test_desc_xml_allows_comparison_operators(self):
+        md = "---\nname: my-skill\ndescription: Use when x < y and y > 0 holds\n---\nbody"
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertNotIn("desc-xml", codes(V.validate_skill(d)))
+
+    def test_desc_first_person_ignores_ie(self):
+        md = "---\nname: my-skill\ndescription: Extracts fields, i.e. named boxes, from forms\n---\nbody"
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertNotIn("desc-first-person", codes(V.validate_skill(d)))
+
+    def test_windows_path_ignores_markdown_escape(self):
+        md = VALID_FM.format(name="my-skill") + "\nThe field file\\_name is escaped.\n"
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertNotIn("windows-path", codes(V.validate_skill(d)))
+
+    def test_ref_nesting_ignores_assets(self):
+        md = VALID_FM.format(name="my-skill") + "\n![logo](assets/img/logo.png)\n"
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertNotIn("ref-nesting", codes(V.validate_skill(d)))
+
+    def test_metadata_block_still_parsed(self):
+        md = ("---\nname: my-skill\ndescription: Valid desc here.\n"
+              "metadata:\n  version: \"0.1.0\"\n---\nbody")
+        d = make_skill(self.tmp, skill_md=md)
+        errs = [f for f in V.validate_skill(d) if f.level == "ERROR"]
+        self.assertEqual(errs, [])
+
+
 class CliExitCodes(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
