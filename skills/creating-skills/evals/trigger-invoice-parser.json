@@ -1,0 +1,12 @@
+{
+  "skills": ["creating-skills"],
+  "query": "Make me a skill that parses invoice PDFs and extracts totals",
+  "files": [],
+  "should_trigger": true,
+  "expected_behavior": [
+    "Recognizes this as a request to author a new skill and activates creating-skills",
+    "Runs the intake step, then scaffolds a folder with new_skill.py using a valid gerund/noun name",
+    "Fills SKILL.md from the template with a third-person description stating what and when",
+    "Runs validate_skill.py and iterates until it reports PASS with no ERROR"
+  ]
+}
