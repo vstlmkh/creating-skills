@@ -1,0 +1,12 @@
+{
+  "skills": ["creating-skills"],
+  "query": "Create a skill called managing-backups for our nightly database backup routine",
+  "files": [],
+  "should_trigger": true,
+  "expected_behavior": [
+    "Scaffolds skills/managing-backups/ with a SKILL.md whose name equals the folder",
+    "Writes a description under 1024 chars in the third person with concrete triggers",
+    "Keeps the SKILL.md body under 500 lines and under ~5000 tokens",
+    "validate_skill.py managing-backups exits 0 with no ERROR findings"
+  ]
+}

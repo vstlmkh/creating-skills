@@ -1,0 +1,11 @@
+{
+  "skills": ["creating-skills"],
+  "query": "Use the existing pdf skill to extract text from this file",
+  "files": ["report.pdf"],
+  "should_trigger": false,
+  "expected_behavior": [
+    "Does NOT activate creating-skills — the user wants to USE a skill, not author one",
+    "No scaffolding or validation of a new skill folder occurs",
+    "Defers to the relevant domain skill or handles the request directly"
+  ]
+}
