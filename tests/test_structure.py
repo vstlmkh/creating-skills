@@ -13,7 +13,8 @@ sys.path.insert(0, SCRIPTS)
 
 import validate_skill as V  # noqa: E402
 
-NINETEEN_KEYS = [
+# The mechanically-oriented practices carried from the original standard.
+CORE_KEYS = [
     "naming-conventions", "writing-effective-descriptions", "progressive-disclosure",
     "avoid-deeply-nested-references", "table-of-contents",
     "workflows-and-feedback-loops", "implement-feedback-loops",
@@ -23,6 +24,19 @@ NINETEEN_KEYS = [
     "package-dependencies", "runtime-environment", "mcp-tool-references",
     "avoid-assuming-tools-are-installed", "token-budgets",
 ]
+
+# Judgment practices folded in from the agentskills.io skill-creation guides.
+ADDED_KEYS = [
+    "ground-in-real-expertise", "design-coherent-units", "spend-context-wisely",
+    "optimize-descriptions", "calibrate-control", "provide-defaults-not-menus",
+    "procedures-over-declarations", "gotchas-sections", "output-templates",
+    "scripts-for-agentic-use", "refine-with-execution",
+]
+
+PRACTICE_KEYS = CORE_KEYS + ADDED_KEYS
+
+# The references that SKILL.md must link and that must open with a ToC.
+DEEP_REFERENCES = ["descriptions.md", "evaluating.md", "scripts.md"]
 
 # Every top-level module either scripts may import. Anything outside this set is a
 # third-party dependency and fails the agent-agnostic / zero-deps requirement.
@@ -44,12 +58,28 @@ class BestPractices(unittest.TestCase):
     def test_has_toc(self):
         self.assertIn("## Contents", self.text)
 
-    def test_all_19_keys_present(self):
-        missing = [k for k in NINETEEN_KEYS if k not in self.text]
+    def test_all_practice_keys_present(self):
+        missing = [k for k in PRACTICE_KEYS if k not in self.text]
         self.assertEqual(missing, [], f"missing best-practice keys: {missing}")
 
-    def test_exactly_19(self):
-        self.assertEqual(len(NINETEEN_KEYS), 19)
+    def test_cites_source(self):
+        # The practices are drawn from agentskills.io; keep the attribution.
+        self.assertIn("agentskills.io", self.text)
+
+
+class DeepReferences(unittest.TestCase):
+    """The judgment-heavy method lives in load-on-demand references."""
+
+    def test_reference_files_exist_with_toc(self):
+        for fn in DEEP_REFERENCES:
+            path = os.path.join(REFS, fn)
+            self.assertTrue(os.path.isfile(path), f"missing reference {fn}")
+            self.assertIn("## Contents", read(path), f"{fn} needs a ## Contents")
+
+    def test_skill_md_links_each_reference(self):
+        skill_md = read(os.path.join(SKILL_DIR, "SKILL.md"))
+        for fn in DEEP_REFERENCES:
+            self.assertIn(f"references/{fn}", skill_md, f"SKILL.md must link {fn}")
 
 
 class Checklist(unittest.TestCase):
@@ -58,6 +88,12 @@ class Checklist(unittest.TestCase):
         self.assertIn("Run the validator", text)
         self.assertIn("evaluation-and-iteration", text)
         self.assertIn("mcp-tool-references", text)
+
+    def test_added_practices_present(self):
+        text = read(os.path.join(REFS, "checklist.md"))
+        for key in ("ground-in-real-expertise", "calibrate-control",
+                    "gotchas-sections", "scripts-for-agentic-use"):
+            self.assertIn(key, text, f"checklist missing {key}")
 
 
 class TemplatesRoundTrip(unittest.TestCase):

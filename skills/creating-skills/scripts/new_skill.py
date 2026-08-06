@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from validate_skill import is_valid_name  # noqa: E402
 
 DEFAULT_DESC = (
-    "Describe what this skill does and when to use it, in the third person, "
-    "with concrete trigger terms. Replace this placeholder."
+    "Use when ... — describe what this skill does and the concrete situations "
+    "that should trigger it. Replace this placeholder."
 )
 
 SKILL_TEMPLATE = """---
@@ -41,6 +41,11 @@ One-paragraph overview of what this skill does and the situations it applies to.
 1. First step.
 2. Second step.
 3. Validate the result and iterate until it is correct.
+
+## Gotchas
+
+- Replace with non-obvious, environment-specific facts the agent would get wrong
+  otherwise. Delete this section if the skill genuinely has none.
 
 ## References
 

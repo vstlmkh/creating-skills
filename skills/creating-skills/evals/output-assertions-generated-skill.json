@@ -1,0 +1,19 @@
+{
+  "skills": ["creating-skills"],
+  "query": "Create a skill called analyzing-logs that scans a log file and summarizes error patterns. We have a runbook at docs/runbook.md describing our log format and known failure modes.",
+  "files": ["docs/runbook.md"],
+  "should_trigger": true,
+  "expected_behavior": [
+    "Grounds the skill in the provided runbook rather than generic logging advice",
+    "Produces skills/analyzing-logs/ with a SKILL.md whose name equals the folder",
+    "Includes a Gotchas section capturing runbook-specific, non-obvious facts",
+    "Runs validate_skill.py and iterates until it reports PASS with no ERROR"
+  ],
+  "assertions": [
+    "A folder analyzing-logs/ exists containing SKILL.md",
+    "SKILL.md frontmatter name equals 'analyzing-logs' and description is <= 1024 chars",
+    "SKILL.md contains a '## Gotchas' section with at least one concrete, log-format-specific item",
+    "validate_skill.py on the folder exits 0 with no ERROR findings",
+    "The description uses imperative 'Use when' phrasing, not 'I can help you'"
+  ]
+}

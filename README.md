@@ -1,8 +1,9 @@
 # creating-skills
 
 An **agent-agnostic**, installable skill that generates new, spec-conformant skills
-on request — applying the Agent Skills open standard and Anthropic's 19 skill
-best-practices, with a scaffold → fill → validate → fix feedback loop.
+on request — applying the [Agent Skills open standard](https://agentskills.io/specification)
+and the [agentskills.io skill-creation best practices](https://agentskills.io/skill-creation/best-practices),
+through a ground → scaffold → fill → validate → evaluate → refine loop.
 
 Because it conforms to the [Agent Skills open standard](https://agentskills.io),
 the same folder loads on any compliant agent — Claude Code, Cursor, Codex, and
@@ -17,11 +18,15 @@ no network access at runtime. If `python3` runs, the skill runs.
 
 Given a request like *"make me a skill for parsing invoices"*, it:
 
-1. Runs a short intake (name, description, whether scripts are needed).
-2. Scaffolds a conformant folder with `scripts/new_skill.py`.
-3. Fills `SKILL.md` from the templates in `references/templates.md`.
-4. Runs `scripts/validate_skill.py` and fixes findings until it reports `PASS`.
-5. Adds at least three evals.
+1. **Grounds** the skill in real expertise (a hands-on task or project artifacts),
+   and settles name, description, and scope.
+2. **Scaffolds** a conformant folder with `scripts/new_skill.py`.
+3. **Fills** `SKILL.md` from the templates — calibrated instructions, a Gotchas
+   section, deep material pushed into `references/`.
+4. **Validates** with `scripts/validate_skill.py`, fixing findings until `PASS`.
+5. **Evaluates** with at least three evals, including a with-skill / without-skill
+   baseline.
+6. **Refines** the description (trigger evals) and the skill (real execution traces).
 
 ## Install
 
@@ -67,7 +72,13 @@ python3 skills/creating-skills/scripts/validate_skill.py managing-backups
 
 ## Reference
 
-- `skills/creating-skills/references/best-practices.md` — the 19 practices.
+- `skills/creating-skills/references/best-practices.md` — the full practice set.
+- `skills/creating-skills/references/descriptions.md` — trigger-eval method for
+  tuning a description.
+- `skills/creating-skills/references/evaluating.md` — baseline + assertions for
+  output quality.
+- `skills/creating-skills/references/scripts.md` — designing bundled scripts for
+  agentic use.
 - `skills/creating-skills/references/checklist.md` — pre-ship checklist.
 - `skills/creating-skills/references/templates.md` — SKILL.md and eval templates.
 
