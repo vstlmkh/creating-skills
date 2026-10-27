@@ -44,16 +44,16 @@
     <text x="0" y="196" font-size="27" font-weight="500" fill="#aeb6dd">Agent skills that pass the spec — on any agent.</text>
     <g font-size="19" font-weight="600" fill="#cfd4f2">
       <g transform="translate(0 232)">
-        <rect x="0" y="0" width="236" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
-        <text x="22" y="29">Agent Skills standard</text>
+        <rect x="0" y="0" width="251" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+        <text x="125.5" y="29" text-anchor="middle">Agent Skills standard</text>
       </g>
-      <g transform="translate(252 232)">
-        <rect x="0" y="0" width="200" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
-        <text x="22" y="29">Zero dependencies</text>
+      <g transform="translate(267 232)">
+        <rect x="0" y="0" width="241" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+        <text x="120.5" y="29" text-anchor="middle">Zero dependencies</text>
       </g>
-      <g transform="translate(468 232)">
-        <rect x="0" y="0" width="238" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
-        <text x="22" y="29">Validate · Eval · Refine</text>
+      <g transform="translate(524 232)">
+        <rect x="0" y="0" width="262" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+        <text x="131" y="29" text-anchor="middle">Validate · Eval · Refine</text>
       </g>
     </g>
   </g>
