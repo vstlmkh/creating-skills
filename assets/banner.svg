@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-label="creating-skills — agent skills that pass the spec">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1326"/>
+      <stop offset="55%" stop-color="#141b33"/>
+      <stop offset="100%" stop-color="#1b1430"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c5cff"/>
+      <stop offset="100%" stop-color="#2fd4a8"/>
+    </linearGradient>
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c5cff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#2fd4a8" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1"/>
+    </pattern>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <clipPath id="card"><rect width="1280" height="320" rx="20"/></clipPath>
+  <g clip-path="url(#card)">
+    <rect width="1280" height="320" fill="url(#bg)"/>
+    <rect width="1280" height="320" fill="url(#grid)"/>
+    <circle cx="1120" cy="60" r="190" fill="#7c5cff" opacity="0.10"/>
+    <circle cx="1210" cy="290" r="150" fill="#2fd4a8" opacity="0.08"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1279" height="319" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
+
+  <!-- hexagon mark -->
+  <g transform="translate(96 160)" filter="url(#glow)">
+    <path d="M0 -66 L57 -33 L57 33 L0 66 L-57 33 L-57 -33 Z" fill="none" stroke="url(#accent)" stroke-width="4"/>
+    <path d="M0 -34 L29 -17 L29 17 L0 34 L-29 17 L-29 -17 Z" fill="none" stroke="url(#accent)" stroke-width="3" opacity="0.55"/>
+    <circle cx="0" cy="0" r="7" fill="#2fd4a8"/>
+  </g>
+
+  <g transform="translate(206 0)" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Inter, Helvetica, Arial, sans-serif">
+    <text x="0" y="132" font-size="66" font-weight="700" fill="#f2f4ff" letter-spacing="-1.5">creating-skills</text>
+    <rect x="2" y="152" width="420" height="3" rx="1.5" fill="url(#rule)"/>
+    <text x="0" y="196" font-size="27" font-weight="500" fill="#aeb6dd">Agent skills that pass the spec — on any agent.</text>
+    <g font-size="19" font-weight="600" fill="#cfd4f2">
+      <g transform="translate(0 232)">
+        <rect x="0" y="0" width="236" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+        <text x="22" y="29">Agent Skills standard</text>
+      </g>
+      <g transform="translate(252 232)">
+        <rect x="0" y="0" width="200" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+        <text x="22" y="29">Zero dependencies</text>
+      </g>
+      <g transform="translate(468 232)">
+        <rect x="0" y="0" width="238" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+        <text x="22" y="29">Validate · Eval · Refine</text>
+      </g>
+    </g>
+  </g>
+</svg>

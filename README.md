@@ -1,3 +1,15 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vstlmkh/creating-skills/master/assets/banner.svg" alt="creating-skills — agent skills that pass the spec, on any agent" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@vstlmkh/creating-skills"><img src="https://img.shields.io/npm/v/%40vstlmkh%2Fcreating-skills?color=7c5cff&label=npm" alt="npm version"></a>
+  <a href="https://agentskills.io/specification"><img src="https://img.shields.io/badge/Agent%20Skills-open%20standard-2fd4a8" alt="Agent Skills open standard"></a>
+  <img src="https://img.shields.io/badge/python-3.8%2B-3776ab" alt="Python 3.8+">
+  <img src="https://img.shields.io/badge/dependencies-zero-2fd4a8" alt="Zero dependencies">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
+</p>
+
 # creating-skills
 
 An **agent-agnostic**, installable skill that generates new, spec-conformant skills
@@ -30,27 +42,27 @@ Given a request like *"make me a skill for parsing invoices"*, it:
 
 ## Install
 
-The skill is the folder `skills/creating-skills/`. Install it by copying that folder
-into your agent's skills directory:
+### npm (recommended)
 
-### Claude Code
 ```bash
-cp -r skills/creating-skills ~/.claude/skills/creating-skills
-```
-(or place it under a plugin's `skills/` directory).
-
-### Cursor
-```bash
-cp -r skills/creating-skills ~/.cursor/skills/creating-skills
+npx @vstlmkh/creating-skills install              # -> ~/.claude/skills/creating-skills
+npx @vstlmkh/creating-skills install --agent cursor   # -> ~/.cursor/skills
+npx @vstlmkh/creating-skills install --dir ./.claude/skills --force
 ```
 
-### Codex / generic agents that support the open standard
+`--agent` knows `claude`, `cursor` and `codex`; `--dir` takes any skills directory,
+project-local included. Nothing is written outside the target folder, and an
+existing `creating-skills/` is only replaced with `--force`.
+
+### Manual copy
+
+The skill is the folder `skills/creating-skills/` — copy it into your agent's
+skills directory:
+
 ```bash
-cp -r skills/creating-skills <agent-skills-dir>/creating-skills
-```
-Or use the open-standard tooling if your setup provides it:
-```bash
-npx skills add <this-repo-or-path>
+cp -r skills/creating-skills ~/.claude/skills/creating-skills   # Claude Code
+cp -r skills/creating-skills ~/.cursor/skills/creating-skills   # Cursor
+cp -r skills/creating-skills <agent-skills-dir>/creating-skills # any other
 ```
 
 Any agent that reads the open-standard `SKILL.md` format works — the folder is the

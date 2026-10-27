@@ -1,0 +1,58 @@
+{
+  "name": "@vstlmkh/creating-skills",
+  "version": "0.2.0",
+  "description": "Agent-agnostic skill that generates spec-conformant agent skills — ground, scaffold, fill, validate, eval, refine. Implements the Agent Skills open standard; Python stdlib only, zero runtime dependencies.",
+  "keywords": [
+    "agent-skills",
+    "skills",
+    "skill",
+    "agent-skill",
+    "skill-creator",
+    "SKILL.md",
+    "agentskills",
+    "open-standard",
+    "claude",
+    "claude-code",
+    "cursor",
+    "codex",
+    "ai-agent",
+    "llm",
+    "prompt-engineering",
+    "scaffold",
+    "generator",
+    "validator",
+    "evals",
+    "developer-tools"
+  ],
+  "homepage": "https://github.com/vstlmkh/creating-skills#readme",
+  "bugs": {
+    "url": "https://github.com/vstlmkh/creating-skills/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vstlmkh/creating-skills.git"
+  },
+  "license": "MIT",
+  "author": "vstlmkh",
+  "type": "commonjs",
+  "bin": {
+    "creating-skills": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "skills/creating-skills/",
+    "assets/banner.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "python3 -m unittest discover -s tests",
+    "prepack": "find skills -name '__pycache__' -type d -prune -exec rm -rf {} + || true"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
