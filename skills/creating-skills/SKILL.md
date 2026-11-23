@@ -1,9 +1,9 @@
 ---
 name: creating-skills
-description: Use when the user wants to create, author, scaffold, write, or improve an agent skill ("make a skill", "new skill", "create a skill", "improve this skill", "написать скилл", "сделать скилл", "улучшить скилл"), or when an existing skill folder must be checked against the standard. Generates spec-conformant skills by grounding in real expertise, then a scaffold → fill → validate → eval → refine loop, applying the Agent Skills open standard and the agentskills.io skill-creation best practices. Works on any agent that reads the open-standard SKILL.md format.
+description: Use when the user wants to create, author, scaffold, write, or improve an agent skill for Kimi Code, Claude Code, or portable use ("make a skill", "new skill", "Kimi skill", "Claude skill", "сделать скилл", "скилл для Kimi", "улучшить скилл"), or when an existing skill folder must be checked against the standard. Generates spec-conformant skills by grounding in real expertise, then a scaffold → fill → validate → eval → refine loop, applying the Agent Skills open standard and agentskills.io best practices.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # creating-skills
@@ -12,7 +12,8 @@ Create skills that conform to the [Agent Skills open standard](https://agentskil
 and follow the agentskills.io skill-creation best practices. The method is a
 feedback loop: ground the skill in real expertise, scaffold a folder, fill it in
 with calibrated instructions, run the validator, evaluate against a baseline,
-and refine from real execution until it holds up.
+and refine from real execution until it holds up. Generate portable skills by
+default, or select the `kimi` / `claude` target when the author names a host.
 
 The scripts use the Python standard library only — no install, no network.
 
@@ -43,14 +44,17 @@ Skill creation:
   first thing to get. Ask only what the request leaves open; keep it short.
 
 Also decide **scope** (one coherent unit of work — not so narrow that several
-skills must co-load, not so broad it won't trigger precisely) and whether the
-skill needs **utility scripts**. If the agent already does the whole task well
-unaided, say so — the skill may not be worth building.
+skills must co-load, not so broad it won't trigger precisely), **target**
+(`portable` by default, or `kimi` / `claude` when explicitly requested), and
+whether the skill needs **utility scripts**. Load
+[references/platforms.md](references/platforms.md) before using host-specific
+fields, arguments, or bundled-file variables. If the agent already does the whole
+task well unaided, say so — the skill may not be worth building.
 
 **Step 2 — Scaffold.** Create the folder with a valid stub:
 
 ```bash
-python3 scripts/new_skill.py <name> [--desc "..."] [--with-scripts] [--dest DIR]
+python3 scripts/new_skill.py <name> [--desc "..."] [--with-scripts] [--dest DIR] [--target portable|kimi|claude]
 ```
 
 The name is validated up front; an invalid or reserved name exits non-zero.
@@ -79,11 +83,13 @@ When the skill bundles scripts, design them for agentic use — load
 **Step 4 — Validate.** Check conformance:
 
 ```bash
-python3 scripts/validate_skill.py <dir>
+python3 scripts/validate_skill.py <dir> [--target portable|kimi|claude]
 ```
 
-It prints one line per finding plus a `PASS`/`FAIL` summary. Resolve every ERROR
-and re-run until it passes. WARN findings are advisory. Do not ship on a `FAIL`.
+Use the same target selected during scaffolding; omit `--target` for portable
+output. The validator prints one line per finding plus a `PASS`/`FAIL` summary.
+Resolve every ERROR and re-run until it passes. WARN findings are advisory. Do
+not ship on a `FAIL`.
 
 **Step 5 — Evaluate.** Add at least three eval scenarios (a positive trigger, an
 output-conformance check, and a negative near-miss) using the templates in
@@ -113,6 +119,10 @@ time you have to correct the agent, add the correction to Gotchas.
   token count is an approximation). Split into references before it grows past.
 - Keep references one level deep; a reference file over 100 lines needs a
   `## Contents` table of contents.
+- Portable output cannot contain Kimi/Claude-only frontmatter or the
+  `KIMI_SKILL_DIR` / `CLAUDE_SKILL_DIR` substitution syntax. For host targets,
+  validate with the matching profile and invoke manually as `/skill:<name>` in
+  Kimi or `/<name>` in Claude.
 
 ## References
 
@@ -128,3 +138,6 @@ time you have to correct the agent, add the correction to Gotchas.
   judgment-only items; run through it before shipping.
 - [references/templates.md](references/templates.md) — SKILL.md and eval
   skeletons; load it during Step 3.
+- [references/platforms.md](references/platforms.md) — Kimi Code and Claude Code
+  locations, fields, invocation, and variables; load it when selecting or
+  customizing a host target.

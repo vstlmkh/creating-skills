@@ -4,7 +4,7 @@
 Standard library only. No network. Importable (tests call the functions directly)
 and runnable as a CLI:
 
-    python3 validate_skill.py <skill_dir> [--json]
+    python3 validate_skill.py <skill_dir> [--json] [--target portable|kimi|claude]
 
 Exit codes:
     0  no ERROR findings (WARN findings may be present)
@@ -16,6 +16,7 @@ practices; judgment-only practices live in references/checklist.md.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import os
@@ -30,9 +31,27 @@ NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 RESERVED = {"anthropic", "claude"}
 MAX_NAME = 64
 MAX_DESC = 1024
+MAX_COMPATIBILITY = 500
 MAX_BODY_LINES = 500
 MAX_BODY_TOKENS = 5000
 TOC_LINE_THRESHOLD = 100
+TARGETS = ("portable", "kimi", "claude")
+SPEC_FIELDS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
+KIMI_FIELDS = {
+    "type", "whenToUse", "when-to-use", "when_to_use", "arguments",
+    "disableModelInvocation", "disable-model-invocation", "disable_model_invocation",
+}
+CLAUDE_FIELDS = {
+    "when_to_use", "argument-hint", "arguments", "disable-model-invocation",
+    "user-invocable", "disallowed-tools", "model", "effort", "context", "agent",
+    "background", "hooks", "paths", "shell",
+}
+ALLOWED_FIELDS = {
+    "portable": SPEC_FIELDS,
+    "kimi": SPEC_FIELDS | KIMI_FIELDS,
+    "claude": SPEC_FIELDS | CLAUDE_FIELDS,
+}
+SKILL_DIR_VARIABLES = {"kimi": "KIMI_SKILL_DIR", "claude": "CLAUDE_SKILL_DIR"}
 
 
 def is_valid_name(name: str) -> bool:
@@ -121,8 +140,10 @@ _FIRST_PERSON_RE = re.compile(r"\b(?:I|You|We)\s")
 _XML_RE = re.compile(r"</?[A-Za-z][^>]*>")
 
 
-def validate_skill(skill_dir: str) -> list:
+def validate_skill(skill_dir: str, target: str = "portable") -> list:
     """Return a list of Finding. ERROR findings mean non-conformant."""
+    if target not in TARGETS:
+        raise ValueError(f"unknown target '{target}'. Choose from: {', '.join(TARGETS)}")
     findings = []
     add = findings.append
     skill_dir = os.path.normpath(skill_dir)
@@ -148,6 +169,28 @@ def validate_skill(skill_dir: str) -> list:
 
     name = fm.get("name", "").strip()
     desc = fm.get("description", "").strip()
+
+    unknown_fields = sorted(set(fm) - ALLOWED_FIELDS[target])
+    for field in unknown_fields:
+        add(Finding("ERROR", "frontmatter-unknown-key",
+                    f"field '{field}' is not supported by the {target} target"))
+
+    compatibility = fm.get("compatibility", "").strip()
+    if len(compatibility) > MAX_COMPATIBILITY:
+        add(Finding("ERROR", "compatibility-length",
+                    f"compatibility is {len(compatibility)} chars (max {MAX_COMPATIBILITY})"))
+
+    if target == "kimi":
+        skill_type = fm.get("type", "prompt").strip()
+        if skill_type not in ("prompt", "inline", "flow"):
+            add(Finding("ERROR", "kimi-type", "Kimi 'type' must be prompt, inline, or flow"))
+        for field in ("disableModelInvocation", "disable-model-invocation", "disable_model_invocation"):
+            if field in fm and fm[field].strip().lower() not in ("true", "false"):
+                add(Finding("ERROR", "kimi-boolean", f"Kimi '{field}' must be true or false"))
+    elif target == "claude":
+        for field in ("disable-model-invocation", "user-invocable", "background"):
+            if field in fm and fm[field].strip().lower() not in ("true", "false", "yes", "no", "on", "off", "1", "0"):
+                add(Finding("ERROR", "claude-boolean", f"Claude '{field}' must be a boolean"))
 
     # name
     if not name:
@@ -180,6 +223,11 @@ def validate_skill(skill_dir: str) -> list:
     if estimate_tokens(body) >= MAX_BODY_TOKENS:
         add(Finding("ERROR", "body-tokens", f"SKILL.md body ~{estimate_tokens(body)} tokens (must be < {MAX_BODY_TOKENS}, approx)"))
 
+    for variable_target, variable in SKILL_DIR_VARIABLES.items():
+        if variable_target != target and f"${{{variable}}}" in body:
+            add(Finding("ERROR", "host-placeholder",
+                        f"${{{variable}}} requires the {variable_target} target, not {target}"))
+
     # SKILL.md text-level warnings
     for m in _MCP_RE.finditer(body):
         if ":" not in m.group(1):
@@ -202,35 +250,34 @@ def validate_skill(skill_dir: str) -> list:
         if _WINDOWS_PATH_RE.search(content):
             add(Finding("WARN", "windows-path", f"{rel} contains a backslash path; use forward slashes"))
         for m in _LINK_RE.finditer(content):
-            target = m.group(1).split()[0].strip()
-            if target.startswith(("http://", "https://", "mailto:", "#")):
+            link_target = m.group(1).split()[0].strip()
+            if link_target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
-            parts = target.split("/")
+            parts = link_target.split("/")
             if ".." in parts:
-                add(Finding("ERROR", "ref-escape", f"{rel} links outside the skill dir: {target}"))
+                add(Finding("ERROR", "ref-escape", f"{rel} links outside the skill dir: {link_target}"))
             elif parts and parts[0] == "references":
                 depth = len([p for p in parts[:-1] if p not in ("", ".")])
                 if depth > 1:
-                    add(Finding("ERROR", "ref-nesting", f"{rel} link '{target}' is more than one level deep"))
+                    add(Finding("ERROR", "ref-nesting", f"{rel} link '{link_target}' is more than one level deep"))
 
     return findings
 
 
 def main(argv=None):
-    argv = list(sys.argv[1:] if argv is None else argv)
-    as_json = "--json" in argv
-    argv = [a for a in argv if a != "--json"]
-    if len(argv) != 1:
-        print("usage: validate_skill.py <skill_dir> [--json]", file=sys.stderr)
-        return 2
-    skill_dir = argv[0]
-    if not os.path.isdir(skill_dir):
-        print(f"ERROR: not a directory: {skill_dir}", file=sys.stderr)
+    parser = argparse.ArgumentParser(description="Validate a skill for a portable or host-specific target.")
+    parser.add_argument("skill_dir", help="skill directory containing SKILL.md")
+    parser.add_argument("--json", action="store_true", help="emit findings as JSON")
+    parser.add_argument("--target", choices=TARGETS, default="portable",
+                        help="validation profile (default: portable Agent Skills standard)")
+    args = parser.parse_args(argv)
+    if not os.path.isdir(args.skill_dir):
+        print(f"ERROR: not a directory: {args.skill_dir}", file=sys.stderr)
         return 2
 
-    findings = validate_skill(skill_dir)
+    findings = validate_skill(args.skill_dir, args.target)
     errors = [f for f in findings if f.level == "ERROR"]
-    if as_json:
+    if args.json:
         print(json.dumps([f._asdict() for f in findings], indent=2))
     else:
         for f in findings:

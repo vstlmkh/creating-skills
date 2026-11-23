@@ -161,6 +161,53 @@ class ErrorChecksBothWays(unittest.TestCase):
         self.assertNotIn("toc-missing", codes(V.validate_skill(d)))
 
 
+class TargetRules(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def test_portable_rejects_host_fields(self):
+        md = VALID_FM.format(name="my-skill").replace(
+            "license: MIT", "type: prompt\ndisable-model-invocation: false\nlicense: MIT")
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertIn("frontmatter-unknown-key", codes(V.validate_skill(d)))
+
+    def test_kimi_fields_pass_only_kimi_profile(self):
+        md = VALID_FM.format(name="my-skill").replace(
+            "license: MIT",
+            "type: flow\nwhenToUse: When reviewing code\ndisableModelInvocation: true\nlicense: MIT")
+        d = make_skill(self.tmp, skill_md=md)
+        errs = [f for f in V.validate_skill(d, "kimi") if f.level == "ERROR"]
+        self.assertEqual(errs, [])
+        self.assertIn("frontmatter-unknown-key", codes(V.validate_skill(d, "claude")))
+
+    def test_kimi_rejects_invalid_type_and_boolean(self):
+        md = VALID_FM.format(name="my-skill").replace(
+            "license: MIT", "type: agent\ndisableModelInvocation: maybe\nlicense: MIT")
+        d = make_skill(self.tmp, skill_md=md)
+        c = codes(V.validate_skill(d, "kimi"))
+        self.assertIn("kimi-type", c)
+        self.assertIn("kimi-boolean", c)
+
+    def test_claude_accepts_documented_boolean_forms(self):
+        md = VALID_FM.format(name="my-skill").replace(
+            "license: MIT", "disable-model-invocation: yes\nuser-invocable: off\nlicense: MIT")
+        d = make_skill(self.tmp, skill_md=md)
+        errs = [f for f in V.validate_skill(d, "claude") if f.level == "ERROR"]
+        self.assertEqual(errs, [])
+
+    def test_wrong_host_placeholder_fails(self):
+        md = VALID_FM.format(name="my-skill") + "\nRun ${KIMI_SKILL_DIR}/scripts/example.py\n"
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertIn("host-placeholder", codes(V.validate_skill(d, "claude")))
+        self.assertIn("host-placeholder", codes(V.validate_skill(d, "portable")))
+
+    def test_compatibility_length(self):
+        md = VALID_FM.format(name="my-skill").replace(
+            "license: MIT", "compatibility: " + ("x" * 501) + "\nlicense: MIT")
+        d = make_skill(self.tmp, skill_md=md)
+        self.assertIn("compatibility-length", codes(V.validate_skill(d)))
+
+
 class WarnChecks(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -277,6 +324,19 @@ class CliExitCodes(unittest.TestCase):
         self.assertEqual(r.returncode, 0)
         import json
         json.loads(r.stdout)  # must be valid JSON
+
+    def test_target_flag(self):
+        md = VALID_FM.format(name="my-skill").replace(
+            "license: MIT", "type: prompt\nwhenToUse: When reviewing code\nlicense: MIT")
+        d = make_skill(self.tmp, skill_md=md)
+        r = self.run_cli(d, "--target", "kimi")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("PASS", r.stdout)
+
+    def test_invalid_target_exit_2(self):
+        d = make_skill(self.tmp)
+        r = self.run_cli(d, "--target", "unknown")
+        self.assertEqual(r.returncode, 2)
 
 
 if __name__ == "__main__":

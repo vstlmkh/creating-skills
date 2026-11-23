@@ -36,7 +36,7 @@ ADDED_KEYS = [
 PRACTICE_KEYS = CORE_KEYS + ADDED_KEYS
 
 # The references that SKILL.md must link and that must open with a ToC.
-DEEP_REFERENCES = ["descriptions.md", "evaluating.md", "scripts.md"]
+DEEP_REFERENCES = ["descriptions.md", "evaluating.md", "scripts.md", "platforms.md"]
 
 # Every top-level module either scripts may import. Anything outside this set is a
 # third-party dependency and fails the agent-agnostic / zero-deps requirement.
@@ -134,6 +134,16 @@ class Dogfood(unittest.TestCase):
     def test_skill_validates_itself(self):
         errs = [f for f in V.validate_skill(SKILL_DIR) if f.level == "ERROR"]
         self.assertEqual(errs, [], f"creating-skills fails its own validator: {errs}")
+
+    def test_package_and_skill_versions_match(self):
+        import json
+        with open(os.path.join(ROOT, "package.json"), encoding="utf-8") as fh:
+            package_version = json.load(fh)["version"]
+        fm, _body = V.parse_frontmatter(read(os.path.join(SKILL_DIR, "SKILL.md")))
+        self.assertEqual(fm["name"], "creating-skills")
+        self.assertIn(f'version: "{package_version}"', read(os.path.join(SKILL_DIR, "SKILL.md")))
+        changelog = read(os.path.join(ROOT, "CHANGELOG.md"))
+        self.assertRegex(changelog, rf"(?m)^## {re.escape(package_version)}\b")
 
 
 class ImportScan(unittest.TestCase):

@@ -10,6 +10,7 @@ const SKILL_NAME = 'creating-skills';
 const SKILL_SRC = path.join(__dirname, '..', 'skills', SKILL_NAME);
 
 const TARGETS = {
+  kimi: '~/.kimi-code/skills',
   claude: '~/.claude/skills',
   cursor: '~/.cursor/skills',
   codex: '~/.codex/skills',
@@ -34,9 +35,10 @@ Options:
   -h, --help      Show this help
 
 Examples:
-  npx ${pkg.name} install
+  npx ${pkg.name} install --agent kimi
+  npx ${pkg.name} install --agent claude
   npx ${pkg.name} install --agent cursor
-  npx ${pkg.name} install --dir ./.claude/skills --force`);
+  npx ${pkg.name} install --dir ./.kimi-code/skills --force`);
 }
 
 function parseArgs(argv) {
@@ -84,7 +86,10 @@ function install(opts) {
     process.exit(1);
   }
 
-  const baseDir = expand(opts.dir || TARGETS[opts.agent] || TARGETS.claude);
+  const kimiHome = process.env.KIMI_CODE_HOME
+    ? path.join(process.env.KIMI_CODE_HOME, 'skills')
+    : null;
+  const baseDir = expand(opts.dir || (opts.agent === 'kimi' && kimiHome) || TARGETS[opts.agent] || TARGETS.claude);
   const dest = path.join(baseDir, SKILL_NAME);
 
   if (fs.existsSync(dest)) {
@@ -97,7 +102,7 @@ function install(opts) {
 
   copyDir(SKILL_SRC, dest);
   console.log(`installed ${SKILL_NAME} v${pkg.version} -> ${dest} (${countFiles(dest)} files)`);
-  console.log('Restart your agent, then ask it to create a skill.');
+  console.log('Open a new session or restart your agent if the skill is not listed, then ask it to create a skill.');
 }
 
 function main() {

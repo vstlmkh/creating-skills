@@ -18,8 +18,8 @@ and the [agentskills.io skill-creation best practices](https://agentskills.io/sk
 through a ground → scaffold → fill → validate → evaluate → refine loop.
 
 Because it conforms to the [Agent Skills open standard](https://agentskills.io),
-the same folder loads on any compliant agent — Claude Code, Cursor, Codex, and
-others — with no changes.
+portable output loads on any compliant agent. Explicit `kimi` and `claude` targets
+also support host-specific frontmatter, arguments, and bundled-file variables.
 
 ## Zero dependencies
 
@@ -45,14 +45,17 @@ Given a request like *"make me a skill for parsing invoices"*, it:
 ### npm (recommended)
 
 ```bash
-npx @vstlmkh/creating-skills install              # -> ~/.claude/skills/creating-skills
-npx @vstlmkh/creating-skills install --agent cursor   # -> ~/.cursor/skills
-npx @vstlmkh/creating-skills install --dir ./.claude/skills --force
+npx @vstlmkh/creating-skills install --agent kimi    # -> ~/.kimi-code/skills
+npx @vstlmkh/creating-skills install --agent claude  # -> ~/.claude/skills
+npx @vstlmkh/creating-skills install --agent cursor  # -> ~/.cursor/skills
+npx @vstlmkh/creating-skills install --dir ./.kimi-code/skills --force
 ```
 
-`--agent` knows `claude`, `cursor` and `codex`; `--dir` takes any skills directory,
-project-local included. Nothing is written outside the target folder, and an
-existing `creating-skills/` is only replaced with `--force`.
+`--agent` knows `kimi`, `claude`, `cursor` and `codex`; without it, the installer
+keeps the backward-compatible Claude default. For Kimi, `--agent kimi` respects
+`KIMI_CODE_HOME` and otherwise uses `~/.kimi-code/skills`. `--dir` takes any skills
+directory, project-local included. Nothing is written outside the target folder,
+and an existing `creating-skills/` is only replaced with `--force`.
 
 ### Manual copy
 
@@ -60,13 +63,15 @@ The skill is the folder `skills/creating-skills/` — copy it into your agent's
 skills directory:
 
 ```bash
-cp -r skills/creating-skills ~/.claude/skills/creating-skills   # Claude Code
-cp -r skills/creating-skills ~/.cursor/skills/creating-skills   # Cursor
-cp -r skills/creating-skills <agent-skills-dir>/creating-skills # any other
+cp -r skills/creating-skills ~/.kimi-code/skills/creating-skills # Kimi Code
+cp -r skills/creating-skills ~/.claude/skills/creating-skills    # Claude Code
+cp -r skills/creating-skills ~/.cursor/skills/creating-skills    # Cursor
+cp -r skills/creating-skills <agent-skills-dir>/creating-skills  # any other
 ```
 
 Any agent that reads the open-standard `SKILL.md` format works — the folder is the
-unit of installation.
+unit of installation. Kimi also discovers project skills in `.kimi-code/skills/`
+and `.agents/skills/`; Claude uses `.claude/skills/`.
 
 ## Usage
 
@@ -78,9 +83,24 @@ The skill activates, scaffolds the folder, fills it in, and validates it. You ca
 also run the tools directly:
 
 ```bash
+# Portable Agent Skills output (default)
 python3 skills/creating-skills/scripts/new_skill.py managing-backups --with-scripts
 python3 skills/creating-skills/scripts/validate_skill.py managing-backups
+
+# Kimi Code: Kimi frontmatter + ${KIMI_SKILL_DIR} for bundled scripts
+python3 skills/creating-skills/scripts/new_skill.py managing-backups --target kimi --with-scripts
+python3 skills/creating-skills/scripts/validate_skill.py managing-backups --target kimi
+
+# Claude Code: Claude frontmatter + ${CLAUDE_SKILL_DIR} for bundled scripts
+python3 skills/creating-skills/scripts/new_skill.py managing-backups --target claude --with-scripts
+python3 skills/creating-skills/scripts/validate_skill.py managing-backups --target claude
 ```
+
+Use `--dest ./.kimi-code/skills` or `--dest ./.claude/skills` to create a
+project-local skill. After filling in the placeholders, invoke it as
+`/skill:managing-backups` in Kimi Code or `/managing-backups` in Claude Code.
+Host-specific output must be validated with the matching `--target`; the default
+`portable` profile deliberately rejects host-only fields and variables.
 
 ## Reference
 
@@ -93,6 +113,8 @@ python3 skills/creating-skills/scripts/validate_skill.py managing-backups
   agentic use.
 - `skills/creating-skills/references/checklist.md` — pre-ship checklist.
 - `skills/creating-skills/references/templates.md` — SKILL.md and eval templates.
+- `skills/creating-skills/references/platforms.md` — Kimi Code and Claude Code
+  locations, frontmatter, invocation, arguments, and skill-directory variables.
 
 ## Development
 

@@ -8,6 +8,7 @@ instructions-only skeleton passes `validate_skill.py` with no ERROR.
 
 - Instructions-only SKILL.md (high freedom)
 - SKILL.md with scripts (low freedom)
+- Kimi Code and Claude Code additions
 - Gotchas section
 - Reference file with table of contents
 - Description before / after
@@ -79,6 +80,32 @@ Run exactly this (do not add flags):
 
 - `references/guide.md` — detailed procedure, load when needed.
 ```
+
+## Kimi Code and Claude Code additions
+
+Load `references/platforms.md` before adding host-specific fields. Keep portable
+skills free of these additions. For a Kimi target, add only fields the skill uses:
+
+```yaml
+type: prompt
+whenToUse: When the user asks to perform this skill's task
+disableModelInvocation: false
+arguments: target mode
+```
+
+For a Claude target, use Claude's hyphenated field names:
+
+```yaml
+when_to_use: When the user asks to perform this skill's task
+argument-hint: "[target] [mode]"
+disable-model-invocation: false
+arguments: target mode
+```
+
+Both hosts support `$ARGUMENTS` and named arguments declared in `arguments`.
+For bundled scripts, use `${KIMI_SKILL_DIR}/scripts/run.py` in Kimi output and
+`${CLAUDE_SKILL_DIR}/scripts/run.py` in Claude output. Do not put either variable
+in portable output.
 
 ## Gotchas section
 

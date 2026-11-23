@@ -15,7 +15,8 @@ practices it cannot decide. Each links to its section in `best-practices.md`.
 
 ## Always
 
-- [ ] **Run the validator** and get `PASS` with no ERROR — `python3 scripts/validate_skill.py <dir>`.
+- [ ] **Run the validator** and get `PASS` with no ERROR — `python3 scripts/validate_skill.py <dir> [--target kimi|claude]`.
+- [ ] **Target is explicit** — portable by default; Kimi/Claude fields and skill-dir variables appear only in their matching target — `runtime-environment`.
 - [ ] **Description** states what AND when, imperative "Use when…", user intent
   in third person, real trigger terms — `writing-effective-descriptions`.
 - [ ] **Calibrated control** — freedom (with *why*) for open steps, exact
@@ -32,7 +33,7 @@ practices it cannot decide. Each links to its section in `best-practices.md`.
 - [ ] **Baseline measured** — output evaluated with the skill AND without it, so
   the skill's value is demonstrated, not assumed — `evaluation-and-iteration`.
 - [ ] **Description triggering** checked with should-/should-not-trigger queries — `optimize-descriptions`.
-- [ ] Tested with each model you plan to run on (Haiku / Sonnet / Opus).
+- [ ] Tested with each target host and model you plan to run on (Kimi Code, Claude Code, Haiku / Sonnet / Opus as applicable).
 - [ ] **Refined from real execution traces**, not just final outputs — `refine-with-execution`.
 
 ## For skills with scripts

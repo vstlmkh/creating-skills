@@ -37,6 +37,32 @@ class Scaffold(unittest.TestCase):
         rc = N.scaffold("dupe", N.DEFAULT_DESC, False, self.tmp)
         self.assertEqual(rc, 1)
 
+    def test_kimi_scaffold_uses_kimi_fields_and_skill_dir(self):
+        rc = N.scaffold("reviewing-code", "Use when reviewing code: pull requests and diffs.",
+                        True, self.tmp, "kimi")
+        self.assertEqual(rc, 0)
+        d = os.path.join(self.tmp, "reviewing-code")
+        with open(os.path.join(d, "SKILL.md"), encoding="utf-8") as fh:
+            text = fh.read()
+        self.assertIn("type: prompt", text)
+        self.assertIn("whenToUse:", text)
+        self.assertIn("disableModelInvocation: false", text)
+        self.assertIn("${KIMI_SKILL_DIR}/scripts/example.py", text)
+        errs = [f for f in V.validate_skill(d, "kimi") if f.level == "ERROR"]
+        self.assertEqual(errs, [], f"Kimi scaffold not conformant: {errs}")
+        self.assertIn("frontmatter-unknown-key", {f.code for f in V.validate_skill(d)})
+
+    def test_claude_scaffold_uses_claude_fields_and_skill_dir(self):
+        rc = N.scaffold("reviewing-code", N.DEFAULT_DESC, True, self.tmp, "claude")
+        self.assertEqual(rc, 0)
+        d = os.path.join(self.tmp, "reviewing-code")
+        with open(os.path.join(d, "SKILL.md"), encoding="utf-8") as fh:
+            text = fh.read()
+        self.assertIn("disable-model-invocation: false", text)
+        self.assertIn("${CLAUDE_SKILL_DIR}/scripts/example.py", text)
+        errs = [f for f in V.validate_skill(d, "claude") if f.level == "ERROR"]
+        self.assertEqual(errs, [], f"Claude scaffold not conformant: {errs}")
+
 
 class Cli(unittest.TestCase):
     def setUp(self):
@@ -62,6 +88,18 @@ class Cli(unittest.TestCase):
         d = os.path.join(self.tmp, "analyzing-logs")
         errs = [f for f in V.validate_skill(d) if f.level == "ERROR"]
         self.assertEqual(errs, [])
+
+    def test_kimi_target_exit_0_and_prints_targeted_validation(self):
+        r = self.run_cli("analyzing-logs", "--dest", self.tmp, "--target", "kimi")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("--target kimi", r.stdout)
+        d = os.path.join(self.tmp, "analyzing-logs")
+        errs = [f for f in V.validate_skill(d, "kimi") if f.level == "ERROR"]
+        self.assertEqual(errs, [])
+
+    def test_invalid_target_exit_2(self):
+        r = self.run_cli("analyzing-logs", "--dest", self.tmp, "--target", "unknown")
+        self.assertEqual(r.returncode, 2)
 
 
 if __name__ == "__main__":

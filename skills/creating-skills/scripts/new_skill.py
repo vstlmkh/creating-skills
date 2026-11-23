@@ -4,30 +4,37 @@
 Standard library only. Usage:
 
     python3 new_skill.py <name> [--desc TEXT] [--with-scripts] [--dest DIR]
+                           [--target portable|kimi|claude]
 
-Name rules are shared with the validator (single source of truth):
-`is_valid_name` and `RESERVED` are imported from validate_skill.py.
+Name and target rules are shared with the validator (single source of truth):
+`is_valid_name` and `TARGETS` are imported from validate_skill.py.
 Exit 0 on success; 1 on invalid name or refusal to overwrite.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 
 # Same directory as this script — the validator is the source of truth for names.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from validate_skill import is_valid_name  # noqa: E402
+from validate_skill import TARGETS, is_valid_name  # noqa: E402
 
 DEFAULT_DESC = (
     "Use when ... — describe what this skill does and the concrete situations "
     "that should trigger it. Replace this placeholder."
 )
 
+HOST_FRONTMATTER = {
+    "kimi": "type: prompt\nwhenToUse: {description}\ndisableModelInvocation: false\n",
+    "claude": "disable-model-invocation: false\n",
+}
+
 SKILL_TEMPLATE = """---
 name: {name}
 description: {description}
-license: MIT
+{host_frontmatter}license: MIT
 metadata:
   version: "0.1.0"
 ---
@@ -58,9 +65,14 @@ SCRIPTS_SECTION = """
 Run the bundled utility instead of regenerating code:
 
 ```bash
-python3 scripts/example.py <input>
+python3 {script_path} <input>
 ```
 """
+
+SKILL_DIR_VARIABLES = {
+    "kimi": "${KIMI_SKILL_DIR}",
+    "claude": "${CLAUDE_SKILL_DIR}",
+}
 
 GUIDE_STUB = """# Guide
 
@@ -83,30 +95,41 @@ if __name__ == "__main__":
 """
 
 
-def build_skill_md(name: str, description: str, with_scripts: bool) -> str:
-    body = SKILL_TEMPLATE.format(name=name, description=description)
+def build_skill_md(name: str, description: str, with_scripts: bool, target: str = "portable") -> str:
+    quoted_description = json.dumps(description, ensure_ascii=False)
+    body = SKILL_TEMPLATE.format(
+        name=name,
+        description=quoted_description,
+        host_frontmatter=HOST_FRONTMATTER.get(target, "").format(description=quoted_description),
+    )
     if with_scripts:
-        body += SCRIPTS_SECTION
+        skill_dir = SKILL_DIR_VARIABLES.get(target)
+        script_path = f"{skill_dir}/scripts/example.py" if skill_dir else "scripts/example.py"
+        body += SCRIPTS_SECTION.format(script_path=script_path)
     return body
 
 
-def scaffold(name, description, with_scripts, dest):
-    target = os.path.join(dest, name)
-    if os.path.exists(target):
-        print(f"ERROR: {target} already exists; refusing to overwrite", file=sys.stderr)
+def scaffold(name, description, with_scripts, dest, target="portable"):
+    if target not in TARGETS:
+        print(f"ERROR: unknown target '{target}'. Choose from: {', '.join(TARGETS)}", file=sys.stderr)
         return 1
-    os.makedirs(os.path.join(target, "references"))
-    os.makedirs(os.path.join(target, "assets"))
-    with open(os.path.join(target, "references", "guide.md"), "w", encoding="utf-8") as fh:
+    skill_dir = os.path.join(dest, name)
+    if os.path.exists(skill_dir):
+        print(f"ERROR: {skill_dir} already exists; refusing to overwrite", file=sys.stderr)
+        return 1
+    os.makedirs(os.path.join(skill_dir, "references"))
+    os.makedirs(os.path.join(skill_dir, "assets"))
+    with open(os.path.join(skill_dir, "references", "guide.md"), "w", encoding="utf-8") as fh:
         fh.write(GUIDE_STUB)  # so the SKILL.md reference link resolves from the start
     if with_scripts:
-        os.makedirs(os.path.join(target, "scripts"))
-        with open(os.path.join(target, "scripts", "example.py"), "w", encoding="utf-8") as fh:
+        os.makedirs(os.path.join(skill_dir, "scripts"))
+        with open(os.path.join(skill_dir, "scripts", "example.py"), "w", encoding="utf-8") as fh:
             fh.write(EXAMPLE_SCRIPT)
-    with open(os.path.join(target, "SKILL.md"), "w", encoding="utf-8") as fh:
-        fh.write(build_skill_md(name, description, with_scripts))
+    with open(os.path.join(skill_dir, "SKILL.md"), "w", encoding="utf-8") as fh:
+        fh.write(build_skill_md(name, description, with_scripts, target))
     validator = os.path.join(os.path.dirname(os.path.abspath(__file__)), "validate_skill.py")
-    print(f"Created {target}. Next: python3 {validator} {target}")
+    target_flag = "" if target == "portable" else f" --target {target}"
+    print(f"Created {skill_dir}. Next: python3 {validator} {skill_dir}{target_flag}")
     return 0
 
 
@@ -116,6 +139,8 @@ def main(argv=None):
     parser.add_argument("--desc", default=DEFAULT_DESC, help="skill description")
     parser.add_argument("--with-scripts", action="store_true", help="also create scripts/ and a Scripts section")
     parser.add_argument("--dest", default=".", help="parent directory (default: current)")
+    parser.add_argument("--target", choices=TARGETS, default="portable",
+                        help="output format (default: portable Agent Skills standard)")
     args = parser.parse_args(argv)
 
     if not is_valid_name(args.name):
@@ -125,7 +150,7 @@ def main(argv=None):
             file=sys.stderr,
         )
         return 1
-    return scaffold(args.name, args.desc, args.with_scripts, args.dest)
+    return scaffold(args.name, args.desc, args.with_scripts, args.dest, args.target)
 
 
 if __name__ == "__main__":

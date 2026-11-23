@@ -1,7 +1,7 @@
 {
   "name": "@vstlmkh/creating-skills",
-  "version": "0.2.0",
-  "description": "Agent-agnostic skill that generates spec-conformant agent skills — ground, scaffold, fill, validate, eval, refine. Implements the Agent Skills open standard; Python stdlib only, zero runtime dependencies.",
+  "version": "0.3.0",
+  "description": "Create spec-conformant agent skills for Kimi Code, Claude Code, and portable use — ground, scaffold, fill, validate, eval, refine. Python stdlib only, zero runtime dependencies.",
   "keywords": [
     "agent-skills",
     "skills",
@@ -11,6 +11,8 @@
     "SKILL.md",
     "agentskills",
     "open-standard",
+    "kimi",
+    "kimi-code",
     "claude",
     "claude-code",
     "cursor",
